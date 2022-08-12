@@ -3,7 +3,8 @@
 
 1 – Em duplas, criar uma aplicação OpenGL para o Jogo “Desafio de obstáculos”, conforme ilustração a seguir:
 
-![alt text](https://github.com/mateusjrcavalcanti/UNIVASF-ComputacaoGrafica/tree/main/3%20ª%20Atividade%20-%201ª%20Unidade%20(Desafio%20dos%20Obstáculos)/enunciado.png?raw=true)
+
+![Exemplo](enunciado.png)
 
 O objetivo é passar um objeto (circulo, triângulo ou retângulo) sem tocar nos objetos. Cada vez que ocorrer um toque em algum obstáculo, o objeto volta para o início e o jogador perde uma “vida”.  O jogo acaba quando ele atravessar sem tocar (vitória) ou bate 3 vezes em um obstáculo (derrota).
 
