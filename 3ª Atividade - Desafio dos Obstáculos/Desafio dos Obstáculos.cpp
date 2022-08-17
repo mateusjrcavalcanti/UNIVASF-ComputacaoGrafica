@@ -4,6 +4,8 @@
 #include <math.h>
 
 GLfloat tx = 0, ty = -22, win = 25;
+float altura = 4.8, largura = 2.2;
+int vidas=3;
 
 typedef struct
 {
@@ -13,13 +15,12 @@ typedef struct
     float colors[3];
 } Obstaculo;
 
-
-Obstaculo SetObstaculo(char tipo, int tamanho, float posicaoum, float posicaodois, float colorum, float colordois, float colortres)
+Obstaculo SetObstaculo(char tipo, int tamanho, float posicaoX, float posicaoY, float colorum, float colordois, float colortres)
 { 
     Obstaculo Ob;
     Ob.tipo = tipo; 
-    Ob.posicao[0] = posicaoum;  
-    Ob.posicao[1] = posicaodois;   
+    Ob.posicao[0] = posicaoX;  
+    Ob.posicao[1] = posicaoY;   
     Ob.tamanho = tamanho;  
     Ob.colors[0] = colorum;  
     Ob.colors[1] = colordois;  
@@ -28,56 +29,87 @@ Obstaculo SetObstaculo(char tipo, int tamanho, float posicaoum, float posicaodoi
 }
 
 Obstaculo obstaculos[] = {
-	SetObstaculo('t', 2, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f),
-	SetObstaculo('r', 3, -17.0f, 18.0f, 0.0f, 1.0f, 0.0f),
-	SetObstaculo('p', 5, 5.0f, 5.0f, 1.0f, 1.0f, 0.0f),
-	SetObstaculo('r', 2, 5.0f, 5.0f, 0.0f, 0.0f, 1.0f),
-	SetObstaculo('r', 2, 5.0f, 5.0f, 1.0f, 0.0f, 1.0f),
-	SetObstaculo('r', 2, 5.0f, 5.0f, 0.0f, 1.0f, 1.0f),
-	SetObstaculo('r', 2, 5.0f, 5.0f, 1.0f, 1.0f, 1.0f),
+	SetObstaculo('t', 3, 	-17.0f, 18.0f,	1.0f, 0.0f, 0.0f),
+	SetObstaculo('r', 5, 	-16.0f, 5.0f, 	0.0f, 1.0f, 0.0f),
+	SetObstaculo('p', 6, 	-1.0f, 8.0f, 	1.0f, 1.0f, 0.0f),
+	SetObstaculo('q', 8, 	15.0f, 17.0f, 	0.0f, 0.0f, 1.0f),
+	SetObstaculo('g', 7, 	11.0f, -5.5f, 	1.0f, 0.0f, 1.0f),
+	SetObstaculo('g', 7, 	-13.0f, -11.0f, 0.0f, 1.0f, 1.0f),
+	SetObstaculo('z', 6, 	17.0f, 5.5f, 	0.7f, 0.4f, 0.2f),
 	};
+	
+bool ptInTriangle(float x, float y, float x0, float y0, float x1, float y1, float x2, float y2) {
+	float p0[2] = {x0, y0}, p1[2] = {x1,y1}, p2[2] = {x2,y2};
+    float dX = x-p2[0];
+    float dY = y-p2[1];
+    float dX21 = p2[0]-p1[0];
+    float dY12 = p1[1]-p2[1];
+    float D = dY12*(p0[0]-p2[0]) + dX21*(p0[1]-p2[1]);
+    float s = dY12*dX + dX21*dY;
+    float t = (p2[1]-p0[1])*dX + (p0[0]-p2[0])*dY;
+    if (D<0) return s<=0 && t<=0 && s+t>=D;
+    return s>=0 && t>=0 && s+t<=D;
+}
 
+bool colidiu(float x0, float y0, float x1, float y1, float x2, float y2) {
+	return	ptInTriangle(tx + largura/2, ty + altura/2, x0, y0, x1, y1, x2, y2) || 
+			ptInTriangle(tx + largura/2, ty - altura/2, x0, y0, x1, y1, x2, y2) || 
+			ptInTriangle(tx - largura/2, ty + altura/2, x0, y0, x1, y1, x2, y2) || 
+			ptInTriangle(tx - largura/2, ty - altura/2, x0, y0, x1, y1, x2, y2);
+}
+
+void Colisao(void)
+{
+	tx = 0;
+	ty = -22;
+	vidas--;
+}
+	
 void DesenhaObstaculo(char tipo, float posicao[2], int tamanho, float colors[3] )
 {
-	int t1, t2, t3, n;	
+	float t1, t2, t3, t4, n;	
 	float angleIncrement, angle;
-	printf ("\t Tipo: %c, \n\t Centro:(X:%i, Y:%i) \n\t Cores: %f %f %f \n\t Pontos: ", 
+	/*printf ("\t Tipo: %c, \n\t Centro:(X:%f, Y:%f) \n\t Cores: %f %f %f \n\t Pontos:", 
 				tipo, 
 				posicao[0], 
 				posicao[1], 
 				colors[0], 
 				colors[1], 
 				colors[2]
-	);
+	);*/
 	glColor3f(colors[0], colors[1], colors[2]);	
 	switch(tipo) {
 	  case 't':
 	  	t1 = posicao[0]-2*tamanho;
 	  	t2 = posicao[0]+2*tamanho;
-	  	t3 = posicao[1]+3*tamanho;
-	  	printf ("[1] => X:%f\t Y:%f \n", t1, posicao[1]);
+	  	t3 = posicao[1]+1.5*tamanho;
+	  	t4 = posicao[1]-1.5*tamanho;
+	  	/*printf (" [1] => X:%f \t Y:%f \n", t1, t4);
 	  	printf ("\t\t [2] => X:%f \t Y:%f \n", t1, t3);
-	  	printf ("\t\t [3] => X:%f \t Y:%f \n", t2, posicao[1]);
+	  	printf ("\t\t [3] => X:%f \t Y:%f \n", t2, t4);*/
 	    glScalef(1.0f, 1.0f, 1.0f);
 	    glBegin(GL_TRIANGLES);
-			glVertex2f(t1, posicao[1]);
+			glVertex2f(t1, t4);
 			glVertex2f(t1, t3);
-			glVertex2f(t2, posicao[1]);
-		glEnd();
+			glVertex2f(t2, t4);
+		glEnd();	
+		if(colidiu(t1, t4, t1, t3, t2, t4)) Colisao();		
 	    break;	  
 	  case 'r':
-	  	t1 = posicao[0]-2*tamanho;
-	  	t2 = posicao[0]+2*tamanho;
-	  	t3 = posicao[1]+2*tamanho;
-	  	printf ("[1] => X:%f\t Y:%f \n", t1, posicao[1]);
-	  	printf ("\t\t [2] => X:%f \t Y:%f \n", t1, t3);
-	  	printf ("\t\t [3] => X:%f \t Y:%f \n", t2, posicao[1]);
-		glScalef(1.0f, 1.0f, 1.0f);
+	  	t1 = posicao[0]-tamanho;
+	  	t2 = posicao[0]+tamanho;
+	  	t3 = posicao[1]+tamanho;
+	  	t4 = posicao[1]-tamanho;
+	  	/*printf (" [1] => X:%f\t Y:%f \n", t1, t4);
+	  	printf ("\t\t [2] => X:%f \t Y:%f \n", t2, t4);
+	  	printf ("\t\t [3] => X:%f \t Y:%f \n", posicao[0], t3);
+		glScalef(1.0f, 1.0f, 1.0f);*/
 	    glBegin(GL_TRIANGLES);
-			glVertex2f(t1, posicao[1]);
-			glVertex2f(t1, t3);
-			glVertex2f(t2, posicao[1]);
+			glVertex2f(t1, t4);
+			glVertex2f(t2, t4);
+			glVertex2f(posicao[0],t3);
 		glEnd();
+		if(colidiu(t1, t4, posicao[0], t3, t2, t4)) Colisao();	
 	    break;	  
 	  case 'p':
 	  	n= 5;
@@ -85,9 +117,93 @@ void DesenhaObstaculo(char tipo, float posicao[2], int tamanho, float colors[3] 
 		angleIncrement *= M_PI / 180.0f;
 		glBegin(GL_TRIANGLE_FAN);
 		angle = 0.0f;
+		float anterior[2], primeiro[2];
 		for (int k = 0; k < n; ++k) {
-			printf ("\t\t\[%i] => X:%f \t Y:%f \n", k, tamanho * cos(angle), tamanho * sin(angle));
-		    glVertex3f(tamanho * cos(angle), tamanho * sin(angle), 0.0f);		    
+			if(k == 0){
+				printf (" [%i] => X:%lf \t Y:%lf \n", k + 1, tamanho * cos(angle) + posicao[0], tamanho * sin(angle) + posicao[1]);
+				primeiro[0] = tamanho * cos(angle) + posicao[0];
+				primeiro[1] = tamanho * sin(angle) + posicao[1];
+			}else{
+				printf ("\t\t [%i] => X:%f \t Y:%f \n", k + 1, tamanho * cos(angle) + posicao[0], tamanho * sin(angle) + posicao[1]);
+				if(k == n - 1){
+					if(colidiu(posicao[0],posicao[1], tamanho * cos(angle) + posicao[0], tamanho * sin(angle) + posicao[1], primeiro[0], primeiro[1])) Colisao();
+				}else{
+					if(colidiu(posicao[0],posicao[1], tamanho * cos(angle) + posicao[0], tamanho * sin(angle) + posicao[1], anterior[0], anterior[1])) Colisao();	
+				}
+			}
+			anterior[0] = tamanho * cos(angle) + posicao[0];
+			anterior[1] = tamanho * sin(angle) + posicao[1];
+			
+		    glVertex3f(tamanho * cos(angle) + posicao[0], tamanho * sin(angle) + posicao[1], 0.0f);		    
+		    angle += angleIncrement;
+		}
+		glEnd();
+	    break;	  
+	  case 'q':
+	  	t1 = posicao[0]+tamanho/2;
+	  	t2 = posicao[0]-tamanho/2;
+	  	t3 = posicao[1]+tamanho/2;
+	  	t4 = posicao[1]-tamanho/2;
+	  	/*printf (" [1] => X:%f\t Y:%f \n", t1, t4);
+	  	printf ("\t\t [2] => X:%f \t Y:%f \n", t2, t4);
+	  	printf ("\t\t [3] => X:%f \t Y:%f \n", t1, t3);
+	  	printf ("\t\t [3] => X:%f \t Y:%f \n", t2, t3);*/
+	    glScalef(1.0f, 1.0f, 1.0f);
+	    glBegin(GL_QUADS);
+			glVertex2f(t1, t3);
+			glVertex2f(t2, t3);
+			glVertex2f(t2, t4)
+			;glVertex2f(t1, t4);			
+		glEnd();
+		if(colidiu(posicao[0], posicao[1], t1, t3, t2, t3)) Colisao();
+		if(colidiu(posicao[0], posicao[1], t2, t4, t2, t3)) Colisao();
+		if(colidiu(posicao[0], posicao[1], t2, t4, t1, t4)) Colisao();
+		if(colidiu(posicao[0], posicao[1], t1, t3, t1, t4)) Colisao();
+	    break; 
+	  case 'g':
+	  	t1 = posicao[0]+3*tamanho/2;
+	  	t2 = posicao[0]-3*tamanho/2;
+	  	t3 = posicao[1]+tamanho/2;
+	  	t4 = posicao[1]-tamanho/2;
+	  	/*printf (" [1] => X:%f\t Y:%f \n", t1, t4);
+	  	printf ("\t\t [2] => X:%f \t Y:%f \n", t2, t4);
+	  	printf ("\t\t [3] => X:%f \t Y:%f \n", t1, t3);
+	  	printf ("\t\t [3] => X:%f \t Y:%f \n", t2, t3);*/
+	    glScalef(1.0f, 1.0f, 1.0f);
+	    glBegin(GL_QUADS);
+			glVertex2f(t1, t3);
+			glVertex2f(t2, t3);
+			glVertex2f(t2, t4)
+			;glVertex2f(t1, t4);			
+		glEnd();
+		if(colidiu(posicao[0], posicao[1], t1, t3, t2, t3)) Colisao();
+		if(colidiu(posicao[0], posicao[1], t2, t4, t2, t3)) Colisao();
+		if(colidiu(posicao[0], posicao[1], t2, t4, t1, t4)) Colisao();
+		if(colidiu(posicao[0], posicao[1], t1, t3, t1, t4)) Colisao();
+	    break;	  
+	  case 'z':
+	  	n= 4;
+	  	angleIncrement = 360.0f / n;
+		angleIncrement *= M_PI / 180.0f;
+		glBegin(GL_TRIANGLE_FAN);
+		angle = 0.0f;
+		for (int k = 0; k < n; ++k) {
+			if(k == 0){
+				printf (" [%i] => X:%lf \t Y:%lf \n", k + 1, tamanho * cos(angle) + posicao[0], tamanho * sin(angle) + posicao[1]);
+				primeiro[0] = tamanho * cos(angle) + posicao[0];
+				primeiro[1] = tamanho * sin(angle) + posicao[1];
+			}else{
+				printf ("\t\t [%i] => X:%f \t Y:%f \n", k + 1, tamanho * cos(angle) + posicao[0], tamanho * sin(angle) + posicao[1]);
+				if(k == n - 1){
+					if(colidiu(posicao[0],posicao[1], tamanho * cos(angle) + posicao[0], tamanho * sin(angle) + posicao[1], primeiro[0], primeiro[1])) Colisao();
+				}else{
+					if(colidiu(posicao[0],posicao[1], tamanho * cos(angle) + posicao[0], tamanho * sin(angle) + posicao[1], anterior[0], anterior[1])) Colisao();	
+				}
+			}
+			anterior[0] = tamanho * cos(angle) + posicao[0];
+			anterior[1] = tamanho * sin(angle) + posicao[1];
+			
+		    glVertex3f(tamanho * cos(angle) + posicao[0], tamanho * sin(angle) + posicao[1], 0.0f);		    
 		    angle += angleIncrement;
 		}
 		glEnd();
@@ -125,19 +241,21 @@ void Desenha(void)
 	glTranslatef(tx, ty, 0.0f);
 	glScalef(1.0f, 1.0f, 1.0f);
 	glColor3f(0.0f, 0.0f, 0.0f);
+	
+	printf ("\n\n\n\n Objeto: %f %f\n", tx, ty);
 	glBegin(GL_QUADS);
-		glVertex2f(0.9, 2.4);
-		glVertex2f(0.9, -2.4);
-		glVertex2f(-0.9, -2.4);
-		glVertex2f(-0.9, 2.4);
+		glVertex2f(largura/2, altura/2);
+		glVertex2f(largura/2, -(altura/2));
+		glVertex2f(-(largura/2), -(altura/2));
+		glVertex2f(-(largura/2), altura/2);
 	glEnd();
 	glPopMatrix();
 	
 	//Obstáculos
-	printf ("\n\n\n\n Obstáculos: \n");
+	printf ("\n\n Obstáculos: \n");
 	for(int i = 0; i<=9; i++){
 	if(obstaculos[i].tipo != NULL){
-		printf ("\n [%i] =>", i);	
+		printf ("\n [%i] =>", i + 1);	
 		DesenhaObstaculo(obstaculos[i].tipo, obstaculos[i].posicao, obstaculos[i].tamanho, obstaculos[i].colors);
 		}		
     }
@@ -175,22 +293,22 @@ void TeclasEspeciais(int key, int x, int y)
 	switch (key)
 	{
 	case GLUT_KEY_LEFT:
-		tx -= 2;
+		tx -= 1;
 		if (tx < -win)
 			tx = -win;
 		break;
 	case GLUT_KEY_RIGHT:
-		tx += 2;
+		tx += 1;
 		if (tx > win)
 			tx = win;
 		break;
 	case GLUT_KEY_DOWN:
-		ty -= 2;
+		ty -= 1;
 		if (ty < -win)
 			ty = -win;
 		break;
 	case GLUT_KEY_UP:
-		ty += 2;
+		ty += 1;
 		if (ty > win)
 			ty = win;
 		break;
